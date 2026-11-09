@@ -1,0 +1,38 @@
+# Local Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime state (includes wallet PRIVATE KEYS)
+node_data/
+**/node_data/
+*.log
+*.pid
+
+# Machine-local configuration / credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# OS / IDE temporary files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.tmp
+~$*
+
+# Local build/review artifacts
+.coverage
+htmlcov/
+dist/
+build/

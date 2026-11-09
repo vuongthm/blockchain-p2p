@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain P2P Node</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        .header h1 { color: #333; font-size: 24px; margin-bottom: 16px; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .stat {
+            background: #fafafa;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        .stat-label { font-size: 11px; color: #666; text-transform: uppercase; }
+        .stat-value { font-size: 18px; font-weight: 600; margin-top: 4px; color: #333; word-break: break-all; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 968px) { .grid { grid-template-columns: 1fr; } }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .card-title { font-size: 18px; font-weight: 600; color: #333; margin-bottom: 16px; }
+
+        label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: #555; }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        input:focus { outline: none; border-color: #2196F3; }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 8px;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #4CAF50; color: white; }
+        .btn-warning { background: #FF9800; color: white; }
+        .btn-secondary { background: #999; color: white; }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+        .alert-success { background: #E8F5E9; color: #2E7D32; border: 1px solid #C8E6C9; }
+        .alert-danger { background: #FFEBEE; color: #C62828; border: 1px solid #FFCDD2; }
+        .alert-info { background: #E3F2FD; color: #1565C0; border: 1px solid #BBDEFB; }
+
+        .tx-list, .blockchain { max-height: 400px; overflow-y: auto; }
+        .tx-item, .block-tx {
+            padding: 12px;
+            background: #fafafa;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            font-size: 13px;
+        }
+        .block {
+            background: #fafafa;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .block-txs {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .address-link {
+            color: #2196F3;
+            cursor: pointer;
+            font-family: monospace;
+            font-weight: 500;
+        }
+        .address-link:hover { text-decoration: underline; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .modal-header { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: #333; }
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .empty { color: #999; text-align: center; padding: 30px; font-style: italic; }
+
+        .security-badge {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                Blockchain P2P Node
+                <span class="security-badge">🔒 SIGNATURE VERIFIED</span>
+            </h1>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">Node URL</div>
+                    <div class="stat-value" style="font-size: 10px; font-family: monospace;" id="nodeUrl">Loading...</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Address</div>
+                    <div class="stat-value" style="font-size: 10px; font-family: monospace;" id="nodeAddr">Loading...</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Balance</div>
+                    <div class="stat-value" id="balance">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Blocks</div>
+                    <div class="stat-value" id="blocks">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Peers</div>
+                    <div class="stat-value" id="peers">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Mempool</div>
+                    <div class="stat-value" id="mempool">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div>
+                <div class="card">
+                    <div class="card-title">Send Transaction</div>
+                    <form id="txForm">
+                        <label>Receiver Address</label>
+                        <input type="text" id="receiver" placeholder="40 hex characters" required>
+                        <label>Amount</label>
+                        <input type="number" id="amount" step="0.01" placeholder="Amount" required>
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    </form>
+                    <div id="txStatus"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Recent Transactions</div>
+                    <div id="recentTx" class="tx-list">Loading...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Actions</div>
+                    <button class="btn btn-success" onclick="mine()">Mine Block</button>
+                    <button class="btn btn-warning" onclick="sync()">Sync Chain</button>
+                    <div id="actionStatus"></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <div class="card-title">Blockchain</div>
+                    <div id="chain" class="blockchain">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="balanceModal">
+        <div class="modal-content">
+            <div class="modal-header">Address Balance</div>
+            <div><strong>Address:</strong><br><span style="font-family: monospace; font-size: 12px; word-break: break-all;" id="modalAddr"></span></div>
+            <div style="margin-top: 12px;"><strong>Balance:</strong> <span id="modalBal"></span></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('balanceModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <div class="modal-header">Confirm Transaction</div>
+            <div><strong>Amount:</strong> <span id="confirmAmt"></span> coins</div>
+            <div style="margin-top: 8px;"><strong>To:</strong><br><span style="font-family: monospace; font-size: 12px; word-break: break-all;" id="confirmRcv"></span></div>
+            <div style="margin-top: 12px; padding: 10px; background: #E8F5E9; border-radius: 6px; font-size: 12px;">
+                <strong>🔒 Security:</strong> Transaction will be signed with your private key and verified by the network
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Cancel</button>
+                <button class="btn btn-primary" id="confirmBtn">Confirm & Sign</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let nodeAddr = '', pending = null;
+
+        const $ = id => document.getElementById(id);
+        const showModal = id => $(id).classList.add('show');
+        const closeModal = id => $(id).classList.remove('show');
+
+        async function updateInfo() {
+            try {
+                const r = await fetch('/info');
+                const d = await r.json();
+                nodeAddr = d.address;
+                $('nodeUrl').textContent = d.node_url || 'N/A';
+                $('nodeAddr').textContent = d.address.substring(0, 12) + '...';
+                $('balance').textContent = d.balance;
+                $('blocks').textContent = d.chain_length;
+                $('peers').textContent = d.peers;
+                $('mempool').textContent = d.mempool;
+            } catch (e) { console.error(e); }
+        }
+
+        async function updateChain() {
+            try {
+                const r = await fetch('/chain');
+                const blocks = (await r.json()).chain.slice().reverse();
+                $('chain').innerHTML = blocks.length === 0 ? '<div class="empty">No blocks yet</div>' :
+                    blocks.map(b => `
+                        <div class="block">
+                            <div class="block-header">
+                                <span style="color: #2196F3;">Block #${b.index}</span>
+                                <span style="font-size: 12px; color: #666;">${b.transactions.length} tx</span>
+                            </div>
+                            <div style="font-family: monospace; font-size: 11px; color: #666;">Hash: ${b.hash.substring(0, 32)}...</div>
+                            ${b.transactions.length > 0 ? `
+                                <div class="block-txs">
+                                    ${b.transactions.map(tx => `
+                                        <div class="block-tx">
+                                            <span class="address-link" onclick="showBal('${tx.sender}')">${tx.sender.substring(0, 8)}</span>
+                                            →
+                                            <span class="address-link" onclick="showBal('${tx.receiver}')">${tx.receiver.substring(0, 8)}</span>
+                                            : <strong>${tx.amount}</strong>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function updateRecent() {
+            if (!nodeAddr) return;
+            try {
+                const r = await fetch(`/transactions/recent/${nodeAddr}?limit=5`);
+                const txs = (await r.json()).transactions;
+                $('recentTx').innerHTML = txs.length === 0 ? '<div class="empty">No transactions</div>' :
+                    txs.map(tx => {
+                        const sent = tx.sender === nodeAddr;
+                        return `
+                            <div class="tx-item">
+                                <div style="color: #666; font-size: 11px; margin-bottom: 6px;">Block #${tx.block_index}</div>
+                                <span class="address-link" onclick="showBal('${tx.sender}')">${tx.sender.substring(0, 10)}...</span>
+                                →
+                                <span class="address-link" onclick="showBal('${tx.receiver}')">${tx.receiver.substring(0, 10)}...</span>
+                                <strong style="color: ${sent ? '#C62828' : '#388E3C'};">${sent ? '-' : '+'}${tx.amount}</strong>
+                            </div>
+                        `;
+                    }).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        $('txForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const receiver = $('receiver').value.trim();
+            const amount = parseFloat($('amount').value);
+            $('txStatus').innerHTML = '';
+
+            try {
+                const r = await fetch('/transactions/validate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sender: nodeAddr, receiver, amount})
+                });
+
+                if (!r.ok) {
+                    const errors = (await r.json()).errors.map(e => `• ${e}`).join('<br>');
+                    $('txStatus').innerHTML = `<div class="alert alert-danger">${errors}</div>`;
+                    return;
+                }
+
+                pending = {sender: nodeAddr, receiver, amount};
+                $('confirmAmt').textContent = amount;
+                $('confirmRcv').textContent = receiver;
+                showModal('confirmModal');
+            } catch (e) {
+                $('txStatus').innerHTML = '<div class="alert alert-danger">Validation failed</div>';
+            }
+        });
+
+        $('confirmBtn').addEventListener('click', async () => {
+            if (!pending) return;
+            closeModal('confirmModal');
+            $('txStatus').innerHTML = '<div class="alert alert-info">Signing and sending transaction...</div>';
+
+            try {
+                // Backend will automatically sign with wallet's private key
+                // and add public_key for verification
+                const r = await fetch('/transactions/new', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(pending)
+                });
+
+                if (r.ok) {
+                    $('txStatus').innerHTML = '<div class="alert alert-success">✓ Transaction signed and sent!</div>';
+                    $('txForm').reset();
+                    setTimeout(() => $('txStatus').innerHTML = '', 3000);
+                } else {
+                    const error = (await r.json()).error;
+                    $('txStatus').innerHTML = `<div class="alert alert-danger">✗ ${error}</div>`;
+                }
+            } catch (e) {
+                $('txStatus').innerHTML = '<div class="alert alert-danger">✗ Failed to send transaction</div>';
+            }
+            pending = null;
+        });
+
+        async function mine() {
+            $('actionStatus').innerHTML = '<div class="alert alert-info">Mining...</div>';
+            try {
+                const r = await fetch('/mine', {method: 'POST'});
+                const msg = (await r.json()).message;
+                $('actionStatus').innerHTML = `<div class="alert ${r.ok ? 'alert-success' : 'alert-danger'}">${msg}</div>`;
+                setTimeout(() => $('actionStatus').innerHTML = '', 3000);
+            } catch (e) {
+                $('actionStatus').innerHTML = '<div class="alert alert-danger">Mining failed</div>';
+            }
+        }
+
+        async function sync() {
+            $('actionStatus').innerHTML = '<div class="alert alert-info">Syncing...</div>';
+            try {
+                const msg = (await (await fetch('/nodes/resolve', {method: 'POST'})).json()).message;
+                $('actionStatus').innerHTML = `<div class="alert alert-success">${msg}</div>`;
+                setTimeout(() => $('actionStatus').innerHTML = '', 3000);
+            } catch (e) {
+                $('actionStatus').innerHTML = '<div class="alert alert-danger">Sync failed</div>';
+            }
+        }
+
+        async function showBal(addr) {
+            $('modalAddr').textContent = addr;
+            $('modalBal').textContent = 'Loading...';
+            showModal('balanceModal');
+            try {
+                const bal = (await (await fetch('/balance/' + addr)).json()).balance;
+                $('modalBal').textContent = bal;
+            } catch (e) {
+                $('modalBal').textContent = 'Error';
+            }
+        }
+
+        updateInfo();
+        updateChain();
+        updateRecent();
+        setInterval(() => { updateInfo(); updateChain(); updateRecent(); }, 5000);
+    </script>
+</body>
+</html>
